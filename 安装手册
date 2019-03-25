@@ -85,9 +85,16 @@ sudo docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3
 kubeadm init --kubernetes-version=v1.11.0 --pod-network-cidr=10.244.0.0/16 --service-cidr=10.96.0.0/12 --ignore-preflight-errors=Swap --ignore-preflight-errors=SystemVerification --ignore-preflight-errors=cri
 
 11.初始化成功,记录下子节点加入集群所需要字段：
-kubeadm join 192.168.137.209:6443 --token oxg9z0.4crtl0ip7y2lw94e --discovery-token-ca-cert-hash sha256:a30bc1116c861a0f94bcc9e93ee0d04df23736ed985d5d1bc82c3eb574ddfa5e
+kubeadm join 192.168.xxx.xxx:6443 --token oxg9z0.4crtl0ip7y2lw94e --discovery-token-ca-cert-hash sha256:a30bc1116c861a0f94bcc9e93ee0d04df23736ed985d5d1bc82c3eb574ddfa5e
 
 12.父节点执行：
 mkdir -p $HOME/.kube
 cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 chown $(id -u):$(id -g) $HOME/.kube/config
+
+13.父节点安装网卡服务: 
+1）安装flannel镜像： https://github.com/coreos/flannel/releases
+下载：flanneld-v0.11.0-amd64.docker
+2)安装flannel 服务
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
