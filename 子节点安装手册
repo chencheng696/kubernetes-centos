@@ -1,0 +1,79 @@
+1.配置主机的hostname,主节点采用master ; 子节点采用名字为child1, child2.(配置完重启机器)
+echo “master” > /etc/hostname
+
+2.关闭selinux安全模块，k8s现阶段不支持 : vim /etc/selinux/config;
+#SELINUX修改为disabled
+SELINUX=disabled
+
+3.关闭防火墙
+sudo systemctl stop firewalld.service   #停止firewall
+sudo systemctl disable firewalld.service #禁止firewall开机启动
+sudo firewall-cmd --state
+
+4.关闭swap
+swapoff -a
+
+5.修改kubernetes国内下载源： vim /etc/yum.repos.d/kubernetes.repo
+修改内容为：
+[kubernetes]
+name=Kubernetes
+baseurl=https://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64/
+enabled=1
+gpgcheck=0
+gpgkey=https://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+
+6.设置iptable网络模式:
+1) echo "1" >/proc/sys/net/bridge/bridge-nf-call-iptables  
+2) echo "1" >/proc/sys/net/bridge/bridge-nf-call-ip6tables
+
+7.安装k8s组件及docker：
+yum install kubectl-1.11.1 kubelet-1.11.1 kubeadm-1.11.1
+yum install docker
+
+8.父节点安装镜像(国内由于网络限制，从阿里云上拉下来并且重新打tag)：
+#从阿里云上拉镜像
+docker pull registry.cn-hangzhou.aliyuncs.com/acs/kube-apiserver-amd64:v1.12.4
+docker pull registry.cn-hangzhou.aliyuncs.com/acs/kube-controller-manager-amd64:v1.12.4
+docker pull registry.cn-hangzhou.aliyuncs.com/acs/kube-scheduler-amd64:v1.12.4 
+docker pull registry.cn-hangzhou.aliyuncs.com/acs/kube-proxy:v1.12.4  
+docker pull registry.cn-hangzhou.aliyuncs.com/acs/pause:3.1 
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3.2.24
+docker pull registry.cn-hangzhou.aliyuncs.com/acs/coredns:1.2.2
+docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/kube-addon-manager-amd64:v8.6
+docker pull registry.cn-hangzhou.aliyuncs.com/k8s_13_images/kubernetes-dashboard-amd64:v1.10.1
+docker pull registry.cn-hangzhou.aliyuncs.com/yancai/storage-provisioner:v1.8.1
+
+#重新打tag
+docker tag registry.cn-hangzhou.aliyuncs.com/acs/kube-apiserver-amd64:v1.12.4 k8s.gcr.io/kube-apiserver-amd64:v1.11.0 
+docker tag registry.cn-hangzhou.aliyuncs.com/acs/kube-controller-manager-amd64:v1.12.4 k8s.gcr.io/kube-controller-manager-amd64:v1.11.0
+docker tag registry.cn-hangzhou.aliyuncs.com/acs/kube-scheduler-amd64:v1.12.4 k8s.gcr.io/kube-scheduler-amd64:v1.11.0
+docker tag registry.cn-hangzhou.aliyuncs.com/acs/kube-proxy:v1.12.4 k8s.gcr.io/kube-proxy-amd64:v1.11.0 
+docker tag registry.cn-hangzhou.aliyuncs.com/acs/pause:3.1 k8s.gcr.io/pause:3.1
+docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3.2.24 k8s.gcr.io/etcd-amd64:3.2.18
+docker tag registry.cn-hangzhou.aliyuncs.com/acs/coredns:1.2.2 k8s.gcr.io/coredns:1.1.3
+docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/kube-addon-manager-amd64:v8.6 k8s.gcr.io/kube-addon-manager:v8.6
+docker tag registry.cn-hangzhou.aliyuncs.com/k8s_13_images/kubernetes-dashboard-amd64:v1.10.1 k8s.gcr.io/kubernetes-dashboard-amd64:v1.10.0
+docker tag registry.cn-hangzhou.aliyuncs.com/yancai/storage-provisioner:v1.8.1 gcr.io/k8s-minikube/storage-provisioner:v1.8.1
+
+#清除不需要的镜像
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/kube-apiserver-amd64:v1.12.4
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/kube-controller-manager-amd64:v1.12.4
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/kube-scheduler-amd64:v1.12.4 
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/kube-proxy:v1.12.4  
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/pause:3.1 
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3.2.24
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/coredns:1.2.2
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/kube-addon-manager-amd64:v8.6
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/k8s_13_images/kubernetes-dashboard-amd64:v1.10.1
+sudo docker rmi registry.cn-hangzhou.aliyuncs.com/yancai/storage-provisioner:v1.8.1
+
+9.父节点初始化cluster:
+kubeadm init --kubernetes-version=v1.11.0 --pod-network-cidr=10.244.0.0/16 --service-cidr=10.96.0.0/12 --ignore-preflight-errors=Swap --ignore-preflight-errors=SystemVerification --ignore-preflight-errors=cri
+
+10.初始化成功,记录下子节点加入集群所需要字段：
+kubeadm join 192.168.xxx.xxx:6443 --token oxg9z0.4crtl0ip7y2lw94e --discovery-token-ca-cert-hash sha256:a30bc1116c861a0f94bcc9e93ee0d04df23736ed985d5d1bc82c3eb574ddfa5e
+
+11.父节点执行：
+mkdir -p $HOME/.kube
+cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+chown $(id -u):$(id -g) $HOME/.kube/config
