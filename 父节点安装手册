@@ -67,32 +67,18 @@ sudo docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/kube-addon-m
 sudo docker rmi registry.cn-hangzhou.aliyuncs.com/k8s_13_images/kubernetes-dashboard-amd64:v1.10.1
 sudo docker rmi registry.cn-hangzhou.aliyuncs.com/yancai/storage-provisioner:v1.8.1
 
-9.子节点安装镜像：
-
-docker pull registry.cn-hangzhou.aliyuncs.com/acs/kube-proxy:v1.12.4  
-docker pull registry.cn-hangzhou.aliyuncs.com/acs/pause:3.1 
-docker pull registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3.2.24
-
-docker tag registry.cn-hangzhou.aliyuncs.com/acs/kube-proxy:v1.12.4 k8s.gcr.io/kube-proxy-amd64:v1.11.0 
-docker tag registry.cn-hangzhou.aliyuncs.com/acs/pause:3.1 k8s.gcr.io/pause:3.1
-docker tag registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3.2.24 k8s.gcr.io/etcd-amd64:3.2.18
-
-sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/kube-proxy:v1.12.4  
-sudo docker rmi registry.cn-hangzhou.aliyuncs.com/acs/pause:3.1 
-sudo docker rmi registry.cn-hangzhou.aliyuncs.com/google_containers/etcd-amd64:3.2.24
-
-10.父节点初始化cluster:
+9.父节点初始化cluster:
 kubeadm init --kubernetes-version=v1.11.0 --pod-network-cidr=10.244.0.0/16 --service-cidr=10.96.0.0/12 --ignore-preflight-errors=Swap --ignore-preflight-errors=SystemVerification --ignore-preflight-errors=cri
 
-11.初始化成功,记录下子节点加入集群所需要字段：
+10.初始化成功,记录下子节点加入集群所需要字段：
 kubeadm join 192.168.xxx.xxx:6443 --token oxg9z0.4crtl0ip7y2lw94e --discovery-token-ca-cert-hash sha256:a30bc1116c861a0f94bcc9e93ee0d04df23736ed985d5d1bc82c3eb574ddfa5e
 
-12.父节点执行：
+11.父节点执行：
 mkdir -p $HOME/.kube
 cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 chown $(id -u):$(id -g) $HOME/.kube/config
 
-13.父节点安装网卡服务: 
+12.父节点安装网卡服务: 
 1）安装flannel镜像： https://github.com/coreos/flannel/releases
 下载：flanneld-v0.11.0-amd64.docker
 2)安装flannel 服务
