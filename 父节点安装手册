@@ -1,4 +1,4 @@
-1.配置主机的hostname,主节点采用master ; 子节点采用名字为child1, child2.(配置完重启机器)
+1.配置主机的hostname,主节点采用master(配置完重启机器)
 echo “master” > /etc/hostname
 
 2.关闭selinux安全模块，k8s现阶段不支持 : vim /etc/selinux/config;
