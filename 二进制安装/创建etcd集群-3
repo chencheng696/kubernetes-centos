@@ -1,0 +1,69 @@
+kubernetes使用etcd存储所有数据，生成集群
+
+先使用以下三台机器部署：
+nodemaster：192.168.137.207
+node1：192.168.137.209
+node2：192.168.137.210
+
+
+1.二进制文件下载etcd
+wget https://github.com/coreos/etcd/releases/download/v3.3.12/etcd-v3.3.12-linux-amd64.tar.gz
+tar -xvf etcd-v3.3.12-linux-amd64.tar.gz
+mv etcd-v3.3.12-linux-amd64/etcd* /usr/local/bin
+
+2.创建etcd.service
+
+cd /usr/lib/systemd/system/
+touch etcd.service
+vim etcd.service
+
+添加如下内容(该节点为hostname为nodemaster的节点,对应的ip为192.168.137.207, 如若切换节点，则需修改下面配置文件中的name 和ip): 
+[Unit]
+Description=Etcd Server
+After=network.target
+After=network-online.target
+Wants=network-online.target
+Documentation=https://github.com/coreos
+
+[Service]
+Type=notify
+WorkingDirectory=/var/lib/etcd/
+EnvironmentFile=-/etc/etcd/etcd.conf
+ExecStart=/usr/local/bin/etcd\
+  --name=nodemaster\
+  --cert-file=/etc/kubernetes/ssl/kubernetes.pem\
+  --key-file=/etc/kubernetes/ssl/kubernetes-key.pem\
+  --peer-cert-file=/etc/kubernetes/ssl/kubernetes.pem\
+  --peer-key-file=/etc/kubernetes/ssl/kubernetes-key.pem\
+  --trusted-ca-file=/etc/kubernetes/ssl/ca.pem\
+  --peer-trusted-ca-file=/etc/kubernetes/ssl/ca.pem\
+  --initial-advertise-peer-urls=https://192.168.137.207:2380\
+  --listen-peer-urls=https://192.168.137.207:2380\
+  --listen-client-urls=https://192.168.137.207:2379,http://127.0.0.1:2379\
+  --advertise-client-urls=https://192.168.137.207:2379\
+  --initial-cluster-token=etcd-cluster\
+  --initial-cluster=nodemaster=https://192.168.137.207:2380,node1=https://192.168.137.209:2380,node2=https://192.168.137.210:2380\
+  --initial-cluster-state new\
+  --data-dir=/var/lib/etcd
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target
+
+3.启动etcd服务(启动是需先打开etcd的主节点，然后马上同样操作子节点，etcd即可顺利加入)
+systemctl daemon-reload
+systemctl enable etcd
+systemctl start etcd
+systemctl status etcd
+
+4.集群健康验证工具：etcdctl \
+  --ca-file=/etc/kubernetes/ssl/ca.pem \
+  --cert-file=/etc/kubernetes/ssl/kubernetes.pem \
+  --key-file=/etc/kubernetes/ssl/kubernetes-key.pem \
+  cluster-health
+  
+结果最后一行为 cluster is healthy 时表示集群服务正常。
+
+
