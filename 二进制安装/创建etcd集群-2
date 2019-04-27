@@ -1,23 +1,23 @@
-kubernetesÊ¹ÓÃetcd´æ´¢ËùÓĞÊı¾İ£¬Éú³É¼¯Èº
+kubernetesä½¿ç”¨etcdå­˜å‚¨æ‰€æœ‰æ•°æ®ï¼Œç”Ÿæˆé›†ç¾¤
 
-ÏÈÊ¹ÓÃÒÔÏÂÈıÌ¨»úÆ÷²¿Êğ£º
-nodemaster£º192.168.137.207
-node1£º192.168.137.209
-node2£º192.168.137.210
+å…ˆä½¿ç”¨ä»¥ä¸‹ä¸‰å°æœºå™¨éƒ¨ç½²ï¼š
+nodemasterï¼š192.168.137.207
+node1ï¼š192.168.137.209
+node2ï¼š192.168.137.210
 
 
-1.¶ş½øÖÆÎÄ¼şÏÂÔØetcd
+1.äºŒè¿›åˆ¶æ–‡ä»¶ä¸‹è½½etcd
 wget https://github.com/coreos/etcd/releases/download/v3.3.12/etcd-v3.3.12-linux-amd64.tar.gz
 tar -xvf etcd-v3.3.12-linux-amd64.tar.gz
 mv etcd-v3.3.12-linux-amd64/etcd* /usr/local/bin
 
-2.´´½¨etcd.service
+2.åˆ›å»ºetcd.service
 
 cd /usr/lib/systemd/system/
 touch etcd.service
 vim etcd.service
 
-Ìí¼ÓÈçÏÂÄÚÈİ(¸Ã½ÚµãÎªhostnameÎªnodemasterµÄ½Úµã,¶ÔÓ¦µÄipÎª192.168.137.207, ÈçÈôÇĞ»»½Úµã£¬ÔòĞèĞŞ¸ÄÏÂÃæÅäÖÃÎÄ¼şÖĞµÄname ºÍip): 
+æ·»åŠ å¦‚ä¸‹å†…å®¹(è¯¥èŠ‚ç‚¹ä¸ºhostnameä¸ºnodemasterçš„èŠ‚ç‚¹,å¯¹åº”çš„ipä¸º192.168.137.207, å¦‚è‹¥åˆ‡æ¢èŠ‚ç‚¹ï¼Œåˆ™éœ€ä¿®æ”¹ä¸‹é¢é…ç½®æ–‡ä»¶ä¸­çš„name å’Œip): 
 [Unit]
 Description=Etcd Server
 After=network.target
@@ -52,18 +52,18 @@ LimitNOFILE=65536
 [Install]
 WantedBy=multi-user.target
 
-3.Æô¶¯etcd·şÎñ(Æô¶¯ÊÇĞèÏÈ´ò¿ªetcdµÄÖ÷½Úµã£¬È»ºóÂíÉÏÍ¬Ñù²Ù×÷×Ó½Úµã£¬etcd¼´¿ÉË³Àû¼ÓÈë)
+3.å¯åŠ¨etcdæœåŠ¡(å¯åŠ¨æ˜¯éœ€å…ˆæ‰“å¼€etcdçš„ä¸»èŠ‚ç‚¹ï¼Œç„¶åé©¬ä¸ŠåŒæ ·æ“ä½œå­èŠ‚ç‚¹ï¼Œetcdå³å¯é¡ºåˆ©åŠ å…¥)
 systemctl daemon-reload
 systemctl enable etcd
 systemctl start etcd
 systemctl status etcd
 
-4.¼¯Èº½¡¿µÑéÖ¤¹¤¾ß£ºetcdctl \
+4.é›†ç¾¤å¥åº·éªŒè¯å·¥å…·ï¼šetcdctl \
   --ca-file=/etc/kubernetes/ssl/ca.pem \
   --cert-file=/etc/kubernetes/ssl/kubernetes.pem \
   --key-file=/etc/kubernetes/ssl/kubernetes-key.pem \
   cluster-health
   
-½á¹û×îºóÒ»ĞĞÎª cluster is healthy Ê±±íÊ¾¼¯Èº·şÎñÕı³£¡£
+ç»“æœæœ€åä¸€è¡Œä¸º cluster is healthy æ—¶è¡¨ç¤ºé›†ç¾¤æœåŠ¡æ­£å¸¸ã€‚
 
 
